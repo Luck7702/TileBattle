@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TileBattle Online</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="game-container">
+      <div class="header">
+        <h1 id="phase-title">TILE BATTLE</h1>
+        <p id="info">Not connected</p>
+      </div>
+
+      <div id="lobby" class="panel" style="display: none">
+        <h2>Rooms</h2>
+        <div class="row">
+          <button id="btn-create-room">Create room</button> 
+          <input id="room-code" placeholder="ROOMCODE" />
+          <button id="btn-join-room">Join</button>
+        </div>
+        <p id="room-status"></p>
+      </div>
+
+      <button id="action-btn">Lock In</button>
+      <div id="grid"></div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>

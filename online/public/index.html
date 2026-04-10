@@ -3,45 +3,47 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>TileBattle Online</title>
+    <title>TileBattle | Tactical Tile Combat</title>
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
-    <div class="game-container">
-      <div class="header">
-        <h1 id="phase-title">TILE BATTLE</h1>
-        <p id="info">Not connected</p>
-      </div>
+    <canvas id="particle-canvas"></canvas>
 
-      <div id="auth" class="panel">
-        <h2>Account</h2>
-        <div class="row">
-          <input id="username" placeholder="username" autocomplete="username" />
-          <input id="password" placeholder="password" type="password" autocomplete="current-password" />
+    <div class="landing-container">
+      <nav class="navbar">
+        <div class="logo">TILEBATTLE</div>
+        <div class="nav-links">
+          <a href="#" class="nav-item">LADDER</a>
+          <a href="auth.html" id="login-link" class="nav-item">LOGIN</a>
         </div>
-        <div class="row">
-          <button id="btn-register">Register</button>
-          <button id="btn-login">Login</button>
-        </div>
-      </div>
+      </nav>
 
-      <div id="lobby" class="panel" style="display: none">
-        <h2>Rooms</h2>
-        <div class="row">
-          <button id="btn-create-room">Create room</button> 
-          <input id="room-code" placeholder="ROOMCODE" />
-          <button id="btn-join-room">Join</button>
-        </div>
-        <p id="room-status"></p>
-      </div>
+      <header class="hero">
+        <h1>Master the Grid.</h1>
+        <p class="subtitle">A minimalist tactical multiplayer game where deception is your greatest weapon.</p>
+        <a href="game.html" class="btn-large">PLAY NOW</a>
+      </header>
 
-      <button id="action-btn">Lock In</button>
-      <div id="grid"></div>
+      <section class="features">
+        <div class="feature-card">
+          <h3>How To Play</h3>
+          <p>Learn the rules and mechanics.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Support</h3>
+          <p>Get help or report bugs.</p>
+        </div>
+        <div class="feature-card">
+          <h3>Donate</h3>
+          <p>Support the creator.</p>
+        </div>
+      </section>
+
+      <footer class="footer">
+        <p>&copy; 2024 TileBattle. Built for the web.</p>
+      </footer>
     </div>
 
-    <script src="config.js"></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <script src="app.js"></script>
+    <script src="landing.js"></script>
   </body>
 </html>
-

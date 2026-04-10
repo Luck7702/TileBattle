@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Login | TileBattle</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <canvas id="particle-canvas"></canvas>
+    
+    <div class="auth-card">
+      <h2 id="auth-title">LOGIN</h2>
+      <p id="auth-info" style="color: #818384; margin-bottom: 20px; font-size: 14px;">Enter your credentials to continue</p>
+      
+      <div class="row">
+        <input id="username" placeholder="Username" autocomplete="username" />
+        <input id="password" placeholder="Password" type="password" autocomplete="current-password" />
+      </div>
+      
+      <button id="auth-btn" style="width: 100%; padding: 12px;">LOGIN</button>
+      
+      <p class="auth-toggle" id="toggle-mode">Don't have an account? Register</p>
+      
+      <a href="/" style="display: block; margin-top: 20px; color: #565758; text-decoration: none; font-size: 12px;">← Back to Home</a>
+    </div>
+
+    <script src="landing.js"></script> <!-- Reusing particles -->
+    <script src="auth-page.js"></script>
+  </body>
+</html>

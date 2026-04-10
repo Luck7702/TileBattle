@@ -111,10 +111,50 @@ const Particles = {
     }
 };
 
+/* --- Auth State Handling --- */
+async function checkAuthState() {
+    const token = localStorage.getItem("tb_token");
+    const loginBtn = document.querySelector('.nav-item[href="auth.html"]') || document.getElementById('login-link');
+    const playBtn = document.querySelector('.btn-large');
+
+    if (token) {
+        try {
+            const res = await fetch('/api/me', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                // Update Login button to Username
+                if (loginBtn) {
+                    loginBtn.innerText = data.user.username.toUpperCase();
+                    loginBtn.href = "#"; // Could link to a profile later
+                }
+                // Set Play button to go straight to the game
+                if (playBtn) {
+                    playBtn.onclick = (e) => {
+                        e.preventDefault();
+                        window.location.href = 'game.html';
+                    };
+                }
+                return;
+            }
+        } catch (e) { console.error("Auth check failed", e); }
+    }
+
+    // Default behavior for guest
+    if (playBtn) {
+        playBtn.onclick = (e) => {
+            e.preventDefault();
+            window.location.href = 'auth.html';
+        };
+    }
+}
+
 /* --- Initialization --- */
 document.addEventListener('DOMContentLoaded', () => {
     Particles.init();
     ModalController.init();
+    checkAuthState();
 
     const cards = document.querySelectorAll('.feature-card');
     const types = ["How To Play", "Support", "Donate"];

@@ -165,3 +165,19 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .tile.selected { background: #565758; border-color: #565758; }
 .tile.correct-location { background: #fff; border-color: #fff; color: #121213; }
 #action-btn { display: none; margin: 14px auto 0; }
+
+/* Auth Page Specifics */
+.auth-card {
+  background: rgba(255,255,255,0.05);
+  padding: 40px;
+  border-radius: 12px;
+  border: 1px solid #3a3a3c;
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+}
+.auth-card h2 { margin-bottom: 20px; font-size: 24px; }
+.auth-card .row { margin: 15px 0; flex-direction: column; }
+.auth-card input { width: 100%; margin-bottom: 10px; }
+.auth-toggle { margin-top: 20px; color: #818384; font-size: 14px; cursor: pointer; text-decoration: underline; }
+.auth-toggle:hover { color: #fff; }

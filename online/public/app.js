@@ -3,7 +3,6 @@ const UI = {
   info: document.getElementById("info"),
   grid: document.getElementById("grid"),
   actionBtn: document.getElementById("action-btn"),
-  auth: document.getElementById("auth"),
   lobby: document.getElementById("lobby"),
   roomStatus: document.getElementById("room-status"),
 };
@@ -22,6 +21,7 @@ const state = {
 };
 
 function setStatus(text) {
+  console.log("Setting status:", text);
   UI.info.innerText = text;
 }
 
@@ -62,21 +62,26 @@ function showAction(show) {
 }
 
 function connectSocket() {
-  if (!state.token) return;
+  console.log("Attempting to connect Socket.IO...");
+  if (!state.token) {
+    window.location.href = "auth.html";
+    return;
+  }
   state.socket = window.io({
     auth: { token: state.token },
     transports: ["websocket", "polling"],
   });
 
   state.socket.on("connect", () => {
+    console.log("Socket.IO connected successfully!");
     setStatus("Connected. Create or join a room.");
     console.log("Client Connected to Server!");
   });
   state.socket.on("connect_error", (err) => {
+    console.error("Socket.IO connection error:", err);
     setStatus(`Connection error: ${err?.message || err}`);
   });
   state.socket.on("me", ({ user }) => {
-    UI.auth.style.display = "none";
     UI.lobby.style.display = "block";
     UI.roomStatus.innerText = `Logged in as ${user.username}`;
   });
@@ -170,43 +175,6 @@ UI.actionBtn.onclick = () => {
   setStatus("Locked in. Waiting...");
 };
 
-async function api(path, body) {
-  const res = await fetch(`/api/${path}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = await res.json().catch(() => ({}));
-  if (!res.ok) throw new Error(data.error || "request_failed");
-  return data;
-}
-
-document.getElementById("btn-register").onclick = async () => {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-  try {
-    const { token } = await api("register", { username, password });
-    state.token = token;
-    localStorage.setItem("tb_token", token);
-    connectSocket();
-  } catch (e) {
-    setStatus(`Register failed: ${e.message}`);
-  }
-};
-
-document.getElementById("btn-login").onclick = async () => {
-  const username = document.getElementById("username").value;
-  const password = document.getElementById("password").value;
-  try {
-    const { token } = await api("login", { username, password });
-    state.token = token;
-    localStorage.setItem("tb_token", token);
-    connectSocket();
-  } catch (e) {
-    setStatus(`Login failed: ${e.message}`);
-  }
-};
-
 document.getElementById("btn-create-room").onclick = () => {
   if (!state.socket) return;
   state.socket.emit("room:create");
@@ -218,7 +186,9 @@ document.getElementById("btn-join-room").onclick = () => {
   state.socket.emit("room:join", { code });
 };
 
-initGrid();
-if (state.token) connectSocket();
-else setStatus("Register or login to play.");
-
+document.addEventListener('DOMContentLoaded', () => {
+  initGrid();
+  console.log("App.js loaded. Token:", state.token ? "present" : "absent");
+  if (state.token) { connectSocket(); }
+  else { window.location.href = "auth.html"; }
+});
