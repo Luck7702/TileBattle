@@ -1,0 +1,7 @@
+window.GAME_CONFIG = {
+  GRID_SIZE: 4,
+  TOTAL_TILES: 16,
+  TILES_TO_PICK: 5,
+  MAX_ROUNDS: 3,
+};
+

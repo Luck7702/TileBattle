@@ -1,0 +1,21 @@
+{
+  "name": "tilebattle",
+  "version": "1.0.0",
+  "description": "Web-based multiplayer tile battle game",
+  "main": "online/server.js",
+  "scripts": {
+    "start": "node online/server.js",
+    "test": "node -c online/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.16.3",
+    "socket.io": "^4.8.3"
+  }
+}
