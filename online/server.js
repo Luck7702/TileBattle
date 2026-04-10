@@ -1,3 +1,4 @@
+require('dotenv').config(); 
 const path = require("path");
 const http = require("http");
 const crypto = require("crypto");
@@ -348,7 +349,9 @@ io.on("connection", (socket) => {
 async function start() {
   await migrate(pool);
   server.listen(PORT, () => {
-    console.log(`Online server listening on :${PORT}`);
+    console.log(`--- TileBattle Backend Live ---`);
+    console.log(`Port: ${PORT}`);
+    console.log(`Game Settings: ${GAME_LIMIT} tiles, ${MAX_ROUNDS} rounds max.`);
   });
 }
 
@@ -356,4 +359,3 @@ start().catch((e) => {
   console.error(e);
   process.exit(1);
 });
-

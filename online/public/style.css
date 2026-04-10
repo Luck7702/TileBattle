@@ -40,8 +40,8 @@ body {
 .subtitle { font-size: 20px; color: #818384; max-width: 600px; margin: 0 auto 30px; line-height: 1.6; }
 
 .btn-large {
-  background: #538d4e;
-  color: white;
+  background: #fff;
+  color: #121213;
   padding: 16px 40px;
   border-radius: 30px;
   text-decoration: none;
@@ -50,7 +50,7 @@ body {
   transition: transform 0.2s;
   display: inline-block;
 }
-.btn-large:hover { transform: scale(1.05); background: #62a35c; }
+.btn-large:hover { transform: scale(1.05); background: #e0e0e0; }
 
 .btn-small {
   background: #fff;
@@ -72,9 +72,44 @@ body {
   padding: 30px;
   border-radius: 12px;
   border: 1px solid #3a3a3c;
+  cursor: pointer;
+  transition: background 0.3s, border-color 0.3s;
 }
-.feature-card h3 { margin-bottom: 15px; color: #538d4e; }
+.feature-card:hover {
+  background: rgba(255,255,255,0.1);
+  border-color: #fff;
+}
+.feature-card h3 { margin-bottom: 15px; color: #fff; }
 .feature-card p { color: #818384; line-height: 1.5; }
+
+/* Modal Styles */
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(0, 0, 0, 0.85);
+  display: none;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+.modal-content {
+  background: #121213;
+  border: 1px solid #fff;
+  padding: 40px;
+  border-radius: 8px;
+  max-width: 500px;
+  width: 90%;
+  position: relative;
+  text-align: center;
+}
+.modal-close {
+  position: absolute;
+  top: 15px; right: 20px;
+  cursor: pointer;
+  font-size: 24px;
+  color: #818384;
+}
+.modal-close:hover { color: #fff; }
 
 .footer { padding: 40px 0; border-top: 1px solid #3a3a3c; color: #565758; font-size: 14px; }
 
@@ -128,5 +163,5 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   user-select: none;
 }
 .tile.selected { background: #565758; border-color: #565758; }
-.tile.correct-location { background: #538d4e; border-color: #538d4e; }
+.tile.correct-location { background: #fff; border-color: #fff; color: #121213; }
 #action-btn { display: none; margin: 14px auto 0; }
