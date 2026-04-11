@@ -40,8 +40,12 @@ async function handleSubmit() {
         const data = await res.json();
         if (!res.ok) throw new Error(data.error || "Request failed");
 
-        localStorage.setItem("tb_token", data.token);
-        window.location.href = "/lobby";
+        if (data.token) {
+            localStorage.setItem("tb_token", data.token);
+            window.location.href = "/lobby";
+        } else {
+            throw new Error("No token received from server");
+        }
     } catch (e) {
         UI.info.innerText = `Error: ${e.message}`;
         UI.info.style.color = "#ff4d4d";
@@ -58,4 +62,5 @@ UI.btn.onclick = handleSubmit;
     });
 });
 
-if (localStorage.getItem("tb_token")) window.location.href = "/lobby";
+const storedToken = localStorage.getItem("tb_token");
+if (storedToken && storedToken !== "null" && storedToken !== "undefined") window.location.href = "/lobby";

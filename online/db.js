@@ -28,6 +28,11 @@ async function migrate(pool) {
     );
   `);
 
+  // Ensure stats columns exist for game logic and profile dashboard
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS wins INTEGER DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS losses INTEGER DEFAULT 0;`);
+  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_points INTEGER DEFAULT 1000;`);
+
   await pool.query(`
     create table if not exists rooms (
       id bigserial primary key,
@@ -39,4 +44,3 @@ async function migrate(pool) {
 }
 
 module.exports = { getPool, migrate };
-

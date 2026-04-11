@@ -58,7 +58,13 @@ async function getUserByUsername(username) {
 }
 
 async function getUserById(id) {
-  const res = await pool.query("select id, username, wins, losses, rank_points, created_at from users where id=$1", [id]);
+  const res = await pool.query(`
+    SELECT id, username, wins, losses, rank_points, created_at,
+    (SELECT COUNT(*) + 1 FROM users u2 
+     WHERE u2.rank_points > u1.rank_points 
+     OR (u2.rank_points = u1.rank_points AND u2.wins > u1.wins)) as global_rank
+    FROM users u1 WHERE u1.id = $1
+  `, [id]);
   return res.rows[0] || null;
 }
 
@@ -102,15 +108,16 @@ app.post("/api/login", async (req, res) => {
 
 app.get("/api/me", async (req, res) => {
   const token = parseAuthHeader(req);
-  if (!token) return res.status(401).json({ error: "missing_token" });
+  if (!token || token === "null") return res.status(401).json({ error: "missing_token" });
 
   try {
     const payload = verifyToken(token);
-    const user = await getUserById(Number(payload.sub));
+    const userId = payload.sub || payload.id;
+    const user = await getUserById(Number(userId));
     if (!user) return res.status(401).json({ error: "invalid_token" });
     return res.json({ user });
-  } catch {
-    return res.status(401).json({ error: "invalid_token" });
+  } catch (err) {
+    return res.status(401).json({ error: "session_expired" });
   }
 });
 
@@ -123,13 +130,20 @@ const io = new Server(server, {
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) return next();
+    // Ignore obvious invalid tokens to prevent processing overhead
+    if (!token || token === "null" || token === "undefined") return next(); 
+    
     const payload = verifyToken(token);
-    const user = await getUserById(Number(payload.sub));
-    if (user) socket.data.user = user;
+    const userId = payload.sub || payload.id;
+    if (!userId) return next(new Error("invalid_token"));
+
+    const user = await getUserById(Number(userId));
+    if (!user) return next(new Error("session_expired"));
+
+    socket.data.user = user;
     return next();
   } catch (e) {
-    return next(); // Allow connection as guest
+    return next(new Error("auth_failed"));
   }
 });
 

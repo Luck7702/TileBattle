@@ -5,7 +5,8 @@
   "main": "online/server.js",
   "scripts": {
     "start": "node online/server.js",
-    "test": "node -c online/server.js"
+    "test": "node -c online/server.js",
+    "dev" : "node --watch online/server.js"
   },
   "keywords": [],
   "author": "",

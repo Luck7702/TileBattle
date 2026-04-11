@@ -67,7 +67,7 @@ function showAction(show) {
 
 function connectSocket() {
   console.log("Attempting to connect Socket.IO...");
-  if (!state.token) {
+  if (!state.token || state.token === "null" || state.token === "undefined") {
     window.location.href = "/auth";
     return;
   }
@@ -82,25 +82,33 @@ function connectSocket() {
     console.log("Client Connected to Server!");
   });
 
+  state.socket.on("connect_error", (err) => {
+    console.error("Lobby Connection Error:", err.message);
+    if (["invalid_token", "session_expired", "auth_failed"].includes(err.message)) {
+        localStorage.removeItem("tb_token");
+        window.location.href = "/auth";
+    } else {
+        setStatus(`Connection error: ${err.message}`);
+    }
+  });
+
   document.getElementById("logout-link").onclick = (e) => {
     e.preventDefault();
     localStorage.removeItem("tb_token");
     window.location.href = "/";
   };
 
-  state.socket.on("connect_error", (err) => {
-    console.error("Socket.IO connection error:", err);
-    setStatus(`Connection error: ${err?.message || err}`);
-  });
   state.socket.on("me", ({ user }) => {
     UI.lobby.style.display = "block";
+    UI.lobbySetup.style.display = "block";
+    UI.lobbyRoom.style.display = "none";
     document.getElementById("user-profile").style.display = "block";
     document.getElementById("prof-username").innerText = user.username.toUpperCase();
     
     // Update Stats
     document.getElementById("stat-wins").innerText = user.wins || 0;
     document.getElementById("stat-losses").innerText = user.losses || 0;
-    document.getElementById("stat-rank").innerText = user.rank_points || 1000;
+    document.getElementById("stat-rank").innerText = `#${user.global_rank || '-'}`;
     
     if (user.created_at) {
         const date = new Date(user.created_at).toLocaleDateString();
@@ -273,7 +281,8 @@ document.getElementById("btn-join-room").onclick = handleJoin;
 
 document.addEventListener('DOMContentLoaded', () => {
   initGrid();
-  console.log("App.js loaded. Token:", state.token ? "present" : "absent");
-  if (state.token) { connectSocket(); }
+  const hasValidToken = state.token && state.token !== "null" && state.token !== "undefined";
+  console.log("App.js loaded. Token Valid:", hasValidToken);
+  if (hasValidToken) { connectSocket(); }
   else { window.location.href = "/auth"; }
 });
