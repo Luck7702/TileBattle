@@ -24,6 +24,15 @@ app.get("/landingpage.html", (req, res) => {
   res.redirect(301, "/");
 });
 
+// Professional Clean Routes
+app.get("/lobby", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "game.html"));
+});
+
+app.get("/auth", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "auth.html"));
+});
+
 // Serve the browser client
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -49,7 +58,7 @@ async function getUserByUsername(username) {
 }
 
 async function getUserById(id) {
-  const res = await pool.query("select id, username from users where id=$1", [id]);
+  const res = await pool.query("select id, username, wins, losses, rank_points, created_at from users where id=$1", [id]);
   return res.rows[0] || null;
 }
 
@@ -114,11 +123,10 @@ const io = new Server(server, {
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (token) {
-      const payload = verifyToken(token);
-      const user = await getUserById(Number(payload.sub));
-      if (user) socket.data.user = user;
-    }
+    if (!token) return next();
+    const payload = verifyToken(token);
+    const user = await getUserById(Number(payload.sub));
+    if (user) socket.data.user = user;
     return next();
   } catch (e) {
     return next(); // Allow connection as guest
@@ -135,7 +143,7 @@ function getOrCreateMatch(code) {
     round: 1,
     phase: "WAITING", // WAITING -> DEFEND -> ATTACK -> RESULT -> (next round or GAME_OVER)
     players: [], // socket.id
-    data: {}, // socket.id -> { defends, attacks, score }
+    data: {}, // socket.id -> { username, ready, defends, attacks, score }
     board: null, // array of 16 symbols
     defenderId: null,
     attackerId: null,
@@ -206,7 +214,7 @@ function calculateScores(match) {
   match.data[attackerId].score += attackerRoundPoints;
   match.data[defenderId].score += defenderRoundPoints;
 
-match.phase = "RESULT";
+  match.phase = "RESULT";
   
   roomEmit(match.code, "roundResult", {
     roundPoints: { [attackerId]: attackerRoundPoints, [defenderId]: defenderRoundPoints },
@@ -226,6 +234,25 @@ match.phase = "RESULT";
 
   if (isLastRound) {
     match.phase = "GAME_OVER";
+    
+    // Determine Winner and Update DB
+    const p1 = match.players[0];
+    const p2 = match.players[1];
+    const score1 = match.data[p1].score;
+    const score2 = match.data[p2].score;
+
+    if (score1 !== score2) {
+      const winnerSid = score1 > score2 ? p1 : p2;
+      const loserSid = winnerSid === p1 ? p2 : p1;
+      const winnerUid = io.sockets.sockets.get(winnerSid)?.data.user.id;
+      const loserUid = io.sockets.sockets.get(loserSid)?.data.user.id;
+
+      if (winnerUid && loserUid) {
+        pool.query("UPDATE users SET wins = wins + 1, rank_points = rank_points + 25 WHERE id = $1", [winnerUid]);
+        pool.query("UPDATE users SET losses = losses + 1, rank_points = GREATEST(0, rank_points - 15) WHERE id = $1", [loserUid]);
+      }
+    }
+
     roomEmit(match.code, "gameOver", {
       rounds: MAX_ROUNDS,
       totals: { [match.players[0]]: match.data[match.players[0]].score, [match.players[1]]: match.data[match.players[1]].score },
@@ -311,17 +338,48 @@ io.on("connection", (socket) => {
     if (!match.players.includes(socket.id)) {
       if (match.players.length >= 2) return socket.emit("room:error", { error: "room_full" });
       match.players.push(socket.id);
-      match.data[socket.id] = { defends: [], attacks: [], score: 0 };
+      match.data[socket.id] = { 
+        username: socket.data.user.username, 
+        ready: false, 
+        defends: [], 
+        attacks: [], 
+        score: 0 
+      };
     }
 
     roomEmit(roomCode, "room:state", {
       code: roomCode,
-      players: match.players.map((id) => ({ socketId: id })),
+      players: match.players.map((id) => ({ 
+        socketId: id, 
+        username: match.data[id].username, 
+        ready: match.data[id].ready 
+      })),
+      phase: match.phase,
+      round: match.round,
+    });
+  });
+
+  socket.on("room:ready", () => {
+    const code = socket.data.roomCode;
+    if (!code || !roomMatches.has(code)) return;
+    const match = roomMatches.get(code);
+    if (!match.data[socket.id]) return;
+
+    match.data[socket.id].ready = !match.data[socket.id].ready;
+
+    roomEmit(code, "room:state", {
+      code: code,
+      players: match.players.map((id) => ({ 
+        socketId: id, 
+        username: match.data[id].username, 
+        ready: match.data[id].ready 
+      })),
       phase: match.phase,
       round: match.round,
     });
 
-    if (match.players.length === 2 && match.phase === "WAITING") {
+    const allReady = match.players.length === 2 && match.players.every(id => match.data[id].ready);
+    if (allReady && match.phase === "WAITING") {
       startNewRound(match);
     }
   });

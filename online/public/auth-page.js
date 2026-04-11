@@ -41,7 +41,7 @@ async function handleSubmit() {
         if (!res.ok) throw new Error(data.error || "Request failed");
 
         localStorage.setItem("tb_token", data.token);
-        window.location.href = "game.html";
+        window.location.href = "/lobby";
     } catch (e) {
         UI.info.innerText = `Error: ${e.message}`;
         UI.info.style.color = "#ff4d4d";
@@ -58,4 +58,4 @@ UI.btn.onclick = handleSubmit;
     });
 });
 
-if (localStorage.getItem("tb_token")) window.location.href = "game.html";
+if (localStorage.getItem("tb_token")) window.location.href = "/lobby";

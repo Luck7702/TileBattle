@@ -7,24 +7,65 @@
     <link rel="stylesheet" href="style.css" />
   </head>
   <body>
+    <nav class="navbar lobby-nav">
+      <div class="landing-container">
+        <div class="nav-content">
+          <div class="logo">TILE BATTLE</div>
+          <div class="nav-links">
+            <a href="/" class="nav-item">Home</a>
+            <a href="#" class="nav-item">Ladder</a>
+            <a href="#" id="logout-link" class="nav-item">Logout</a>
+          </div>
+        </div>
+      </div>
+    </nav>
+
     <div class="game-container">
       <div class="header">
         <h1 id="phase-title">TILE BATTLE</h1>
         <p id="info">Not connected</p>
       </div>
 
-      <div id="lobby" class="panel" style="display: none">
-        <h2>Rooms</h2>
-        <div class="row">
-          <button id="btn-create-room">Create room</button> 
-          <input id="room-code" placeholder="ROOMCODE" />
-          <button id="btn-join-room">Join</button>
-        </div>
-        <p id="room-status"></p>
+      <div id="user-profile" class="panel profile-panel" style="display: none;">
+          <div class="profile-main">
+              <span class="user-tag">PLAYER</span>
+              <h3 id="prof-username">USERNAME</h3>
+              <p id="prof-joined" style="font-size: 10px; color: #565758; margin-top: 2px;">Joined: --</p>
+              <div class="user-stats">
+                  <div class="stat-item"><span>WINS</span><strong id="stat-wins">0</strong></div>
+                  <div class="stat-item"><span>LOSSES</span><strong id="stat-losses">0</strong></div>
+                  <div class="stat-item"><span>RANK</span><strong id="stat-rank">1000</strong></div>
+              </div>
+          </div>
       </div>
 
-      <button id="action-btn">Lock In</button>
-      <div id="grid"></div>
+      <div id="lobby" class="panel" style="display: none">
+        <div id="lobby-setup">
+          <h2>Rooms</h2>
+          <div class="row">
+            <button id="btn-create-room">Create room</button> 
+            <input id="room-code" placeholder="ENTER CODE" maxlength="6" style="text-transform: uppercase;" autocomplete="off" />
+            <button id="btn-join-room">Join</button>
+          </div>
+        </div>
+
+        <div id="lobby-room" style="display: none;">
+          <div class="room-header">
+            <h2 id="display-room-code">ROOM: ######</h2>
+            <button id="btn-copy-code" class="btn-copy">COPY</button>
+          </div>
+          <div id="player-list" class="player-list">
+            <!-- Players injected here -->
+          </div>
+          <button id="btn-ready" class="btn-ready">READY UP</button>
+          <button id="btn-leave-room" class="btn-leave">Leave Room</button>
+        </div>
+        
+        <p id="room-status" style="margin-top: 15px; font-size: 14px; color: #818384;"></p>
+      </div>
+
+      <button id="action-btn" style="display: none;">Lock In</button>
+      <div id="grid" style="display: none;"></div>
     </div>
 
     <script src="config.js"></script>

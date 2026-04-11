@@ -13,7 +13,7 @@
         <div class="logo">TILE BATTLE</div>
         <div class="nav-links">
             <a href="#" class="nav-item">Ladder</a>
-          <a href="auth.html" id="login-link" class="nav-item">Login</a>
+          <a href="/auth" id="login-link" class="nav-item">Login</a>
         </div>
       </nav>
 
@@ -24,7 +24,7 @@
           outsmart your opponent, and claim victory.
         </p>
         <div class="cta-group">
-          <a href="game.html" class="btn-large">Start Battling</a>
+          <a href="/lobby" class="btn-large">Start Battling</a>
         </div>
       </header>
 
@@ -44,9 +44,13 @@
       </section>
 
       <footer class="footer">
-        <p>Current online players: <span id="online-count">0</span></p>
-        <p>&copy; 2026 TileBattle Online. All rights reserved.</p>
-        <p>Dennis CH</p>
+        <div class="footer-content">
+          <div class="footer-main">
+            <p>Current online players: <span id="online-count">0</span></p>
+            <p>&copy; 2026 TileBattle Online. All rights reserved. | Dennis CH</p>
+          </div>
+          <div class="version-watermark">v1.0.4-beta</div>
+        </div>
       </footer>
     </div>
     <script src="/socket.io/socket.io.js"></script>

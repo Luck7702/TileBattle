@@ -5,6 +5,10 @@ const UI = {
   actionBtn: document.getElementById("action-btn"),
   lobby: document.getElementById("lobby"),
   roomStatus: document.getElementById("room-status"),
+  lobbySetup: document.getElementById("lobby-setup"),
+  lobbyRoom: document.getElementById("lobby-room"),
+  playerList: document.getElementById("player-list"),
+  roomCodeInput: document.getElementById("room-code"),
 };
 
 const state = {
@@ -64,7 +68,7 @@ function showAction(show) {
 function connectSocket() {
   console.log("Attempting to connect Socket.IO...");
   if (!state.token) {
-    window.location.href = "auth.html";
+    window.location.href = "/auth";
     return;
   }
   state.socket = window.io({
@@ -77,26 +81,71 @@ function connectSocket() {
     setStatus("Connected. Create or join a room.");
     console.log("Client Connected to Server!");
   });
+
+  document.getElementById("logout-link").onclick = (e) => {
+    e.preventDefault();
+    localStorage.removeItem("tb_token");
+    window.location.href = "/";
+  };
+
   state.socket.on("connect_error", (err) => {
     console.error("Socket.IO connection error:", err);
     setStatus(`Connection error: ${err?.message || err}`);
   });
   state.socket.on("me", ({ user }) => {
     UI.lobby.style.display = "block";
-    UI.roomStatus.innerText = `Logged in as ${user.username}`;
+    document.getElementById("user-profile").style.display = "block";
+    document.getElementById("prof-username").innerText = user.username.toUpperCase();
+    
+    // Update Stats
+    document.getElementById("stat-wins").innerText = user.wins || 0;
+    document.getElementById("stat-losses").innerText = user.losses || 0;
+    document.getElementById("stat-rank").innerText = user.rank_points || 1000;
+    
+    if (user.created_at) {
+        const date = new Date(user.created_at).toLocaleDateString();
+        document.getElementById("prof-joined").innerText = `Member since: ${date}`;
+    }
+
+    UI.roomStatus.innerText = "Ready to battle";
   });
 
   state.socket.on("room:created", ({ code }) => {
     UI.roomStatus.innerText = `Room created: ${code}`;
+    state.socket.emit("room:join", { code });
   });
   state.socket.on("room:error", ({ error }) => {
     UI.roomStatus.innerText = `Room error: ${error}`;
+    document.getElementById("btn-create-room").disabled = false;
+    document.getElementById("btn-join-room").disabled = false;
   });
+
   state.socket.on("room:state", ({ code, phase, round, players }) => {
     state.roomCode = code;
     state.round = round;
     state.currentPhase = phase;
-    UI.roomStatus.innerText = `Room ${code} (${players.length}/2)`;
+    UI.grid.style.display = "none";
+    UI.roomCodeInput.value = "";
+    
+    UI.lobbySetup.style.display = "none";
+    UI.lobbyRoom.style.display = "block";
+    document.getElementById("display-room-code").innerText = `ROOM: ${code}`;
+
+    UI.playerList.innerHTML = "";
+    players.forEach(p => {
+      const pEl = document.createElement("div");
+      pEl.className = `player-badge ${p.ready ? 'ready' : ''}`;
+      pEl.innerHTML = `
+        <span class="p-name">${p.username}</span>
+        <span class="p-status">${p.ready ? 'READY' : 'WAITING...'}</span>
+      `;
+      UI.playerList.appendChild(pEl);
+
+      if (p.socketId === state.socket.id) {
+        document.getElementById("btn-ready").innerText = p.ready ? "UNREADY" : "READY UP";
+        document.getElementById("btn-ready").classList.toggle("is-ready", p.ready);
+      }
+    });
   });
 
   state.socket.on("roundPhase", (data) => {
@@ -107,6 +156,9 @@ function connectSocket() {
     state.board = data.board;
     state.values = data.values;
     state.selectedTiles = [];
+    UI.lobby.style.display = "none"; // Hide lobby when game starts
+    document.getElementById("user-profile").style.display = "none"; // Hide profile panel during match
+    UI.grid.style.display = "grid"; // Show grid when game starts
     initGrid();
     clearTileClasses();
 
@@ -175,20 +227,53 @@ UI.actionBtn.onclick = () => {
   setStatus("Locked in. Waiting...");
 };
 
+document.getElementById("btn-ready").onclick = () => {
+  if (!state.socket) return;
+  state.socket.emit("room:ready");
+};
+
+document.getElementById("btn-copy-code").onclick = () => {
+  if (!state.roomCode) return;
+  navigator.clipboard.writeText(state.roomCode);
+  const btn = document.getElementById("btn-copy-code");
+  const original = btn.innerText;
+  btn.innerText = "COPIED!";
+  btn.classList.add("copied");
+  setTimeout(() => {
+    btn.innerText = original;
+    btn.classList.remove("copied");
+  }, 2000);
+};
+
+document.getElementById("btn-leave-room").onclick = () => {
+  window.location.reload(); // Quickest way to reset socket state and UI
+};
+
 document.getElementById("btn-create-room").onclick = () => {
   if (!state.socket) return;
+  document.getElementById("btn-create-room").disabled = true;
+  document.getElementById("btn-join-room").disabled = true;
   state.socket.emit("room:create");
 };
 
-document.getElementById("btn-join-room").onclick = () => {
+const handleJoin = () => {
   if (!state.socket) return;
-  const code = document.getElementById("room-code").value;
+  const code = UI.roomCodeInput.value.trim().toUpperCase();
+  if (!code) return;
+  document.getElementById("btn-create-room").disabled = true;
+  document.getElementById("btn-join-room").disabled = true;
   state.socket.emit("room:join", { code });
 };
+
+UI.roomCodeInput.onkeypress = (e) => {
+  if (e.key === "Enter") handleJoin();
+};
+
+document.getElementById("btn-join-room").onclick = handleJoin;
 
 document.addEventListener('DOMContentLoaded', () => {
   initGrid();
   console.log("App.js loaded. Token:", state.token ? "present" : "absent");
   if (state.token) { connectSocket(); }
-  else { window.location.href = "auth.html"; }
+  else { window.location.href = "/auth"; }
 });

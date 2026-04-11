@@ -114,7 +114,7 @@ const Particles = {
 /* --- Auth State Handling --- */
 async function checkAuthState() {
     const token = localStorage.getItem("tb_token");
-    const loginBtn = document.querySelector('.nav-item[href="auth.html"]') || document.getElementById('login-link');
+    const loginBtn = document.querySelector('.nav-item[href="/auth"]') || document.getElementById('login-link');
     const playBtn = document.querySelector('.btn-large');
 
     if (token) {
@@ -132,7 +132,7 @@ async function checkAuthState() {
                 }
 
                 // Both buttons should now go straight to the game
-                const goToGame = (e) => { e.preventDefault(); window.location.href = 'game.html'; };
+                const goToGame = (e) => { e.preventDefault(); window.location.href = '/lobby'; };
                 if (playBtn) playBtn.onclick = goToGame;
                 return;
             } else if (res.status === 401) {
@@ -143,7 +143,7 @@ async function checkAuthState() {
     }
 
     // Default behavior for guest: both go to auth
-    const goToAuth = (e) => { e.preventDefault(); window.location.href = 'auth.html'; };
+    const goToAuth = (e) => { e.preventDefault(); window.location.href = '/auth'; };
     if (playBtn) playBtn.onclick = goToAuth;
 }
 
