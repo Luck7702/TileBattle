@@ -114,7 +114,7 @@ const Particles = {
 /* --- Auth State Handling --- */
 async function checkAuthState() {
     const token = localStorage.getItem("tb_token");
-    const loginBtn = document.querySelector('.nav-item[href="/auth"]') || document.getElementById('login-link');
+    const loginBtn = document.getElementById('login-link');
     const playBtn = document.querySelector('.btn-large');
 
     if (token) {
@@ -124,11 +124,18 @@ async function checkAuthState() {
             });
             if (res.ok) {
                 const data = await res.json();
-                // Update Login button to Username
                 if (loginBtn) {
-                    loginBtn.innerText = data.user.username.toUpperCase();
-                    loginBtn.style.cursor = "default";
-                    loginBtn.onclick = (e) => e.preventDefault();
+                    loginBtn.innerText = `LOGOUT (${data.user.username.toUpperCase()})`;
+                    loginBtn.href = "#";
+                    loginBtn.onclick = (e) => {
+                        e.preventDefault();
+                        localStorage.removeItem("tb_token");
+                        window.location.reload();
+                    };
+                }
+                
+                if (playBtn) {
+                    playBtn.innerText = "ENTER LOBBY";
                 }
 
                 // Both buttons should now go straight to the game

@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel | TileBattle</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <nav class="navbar lobby-nav">
+        <div class="landing-container">
+            <div class="nav-content">
+                <div class="logo">TB ADMIN</div>
+                <div class="nav-links">
+                    <a href="/lobby" class="nav-item">Back to Game</a>
+                    <a href="/" class="nav-item">Home</a>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="game-container" style="max-width: 900px;">
+        <div class="header">
+            <h1>User Management</h1>
+            <p id="admin-status">Loading system data...</p>
+        </div>
+
+        <div class="panel">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th><th>Username</th><th>Wins</th><th>Rank</th><th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="user-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+    <script src="admin.js"></script>
+</body>
+</html>

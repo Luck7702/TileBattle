@@ -227,7 +227,12 @@ function connectSocket() {
 
 UI.actionBtn.onclick = () => {
   if (!state.socket) return;
-  if (state.selectedTiles.length !== state.limit) return alert(`Pick exactly ${state.limit}`);
+  if (state.selectedTiles.length !== state.limit) {
+      setStatus(`⚠ Error: You must pick exactly ${state.limit} tiles.`);
+      UI.info.style.color = "#ff4d4d";
+      return;
+  }
+  UI.info.style.color = "#818384";
   const ev = state.currentPhase === "DEFEND" ? "submitDraw" : "submitGuess";
   state.socket.emit(ev, state.selectedTiles);
   state.currentPhase = "LOCKED";
