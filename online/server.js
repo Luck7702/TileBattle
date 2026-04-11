@@ -19,6 +19,11 @@ const SYMBOL_VALUES = { "1": 1, "2": 2, "3": 3, "4": 4 };
 const app = express();
 app.use(express.json());
 
+// Redirect legacy landing page URL to the new root
+app.get("/landingpage.html", (req, res) => {
+  res.redirect(301, "/");
+});
+
 // Serve the browser client
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -53,6 +58,7 @@ app.post("/api/register", async (req, res) => {
   const password = String(req.body?.password || "");
 
   if (username.length < 3) return res.status(400).json({ error: "username_too_short" });
+  if (username.length > 16) return res.status(400).json({ error: "username_too_long" });
   if (password.length < 6) return res.status(400).json({ error: "password_too_short" });
 
   const passwordHash = await hashPassword(password);
@@ -108,14 +114,14 @@ const io = new Server(server, {
 io.use(async (socket, next) => {
   try {
     const token = socket.handshake.auth?.token;
-    if (!token) return next(new Error("missing_token"));
-    const payload = verifyToken(token);
-    const user = await getUserById(Number(payload.sub));
-    if (!user) return next(new Error("invalid_token"));
-    socket.data.user = user;
+    if (token) {
+      const payload = verifyToken(token);
+      const user = await getUserById(Number(payload.sub));
+      if (user) socket.data.user = user;
+    }
     return next();
   } catch (e) {
-    return next(new Error("invalid_token"));
+    return next(); // Allow connection as guest
   }
 });
 
@@ -263,10 +269,16 @@ function checkPhaseComplete(match, phase) {
   }
 }
 
+function broadcastUserCount() {
+  io.emit("userCount", io.engine.clientsCount);
+}
+
 io.on("connection", (socket) => {
-  socket.emit("me", { user: socket.data.user });
+  if (socket.data.user) socket.emit("me", { user: socket.data.user });
+  broadcastUserCount();
 
   socket.on("room:create", async () => {
+    if (!socket.data.user) return socket.emit("room:error", { error: "unauthorized" });
     const code = makeRoomCode();
     try {
       await pool.query("insert into rooms (code, owner_user_id) values ($1,$2)", [
@@ -281,6 +293,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("room:join", async ({ code }) => {
+    if (!socket.data.user) return socket.emit("room:error", { error: "unauthorized" });
     const roomCode = String(code || "").trim().toUpperCase();
     if (!roomCode) return socket.emit("room:error", { error: "missing_code" });
 
@@ -334,6 +347,7 @@ io.on("connection", (socket) => {
   });
 
   socket.on("disconnect", () => {
+    broadcastUserCount();
     const code = socket.data.roomCode;
     if (!code) return;
     const match = roomMatches.get(code);

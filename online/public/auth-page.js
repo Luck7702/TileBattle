@@ -7,6 +7,9 @@ const UI = {
     passIn: document.getElementById("password")
 };
 
+// Limit username input length physically in the browser
+if (UI.userIn) UI.userIn.maxLength = 16;
+
 let isLogin = true;
 
 UI.toggle.onclick = () => {
@@ -21,6 +24,7 @@ async function handleSubmit() {
     const password = UI.passIn.value;
 
     if (!username || !password) return alert("Please fill in all fields.");
+    if (username.length > 16) return alert("Username must be 16 characters or less.");
 
     UI.btn.disabled = true;
     UI.info.innerText = "Processing...";

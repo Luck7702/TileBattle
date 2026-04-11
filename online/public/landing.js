@@ -127,26 +127,33 @@ async function checkAuthState() {
                 // Update Login button to Username
                 if (loginBtn) {
                     loginBtn.innerText = data.user.username.toUpperCase();
-                    loginBtn.href = "#"; // Could link to a profile later
+                    loginBtn.style.cursor = "default";
+                    loginBtn.onclick = (e) => e.preventDefault();
                 }
-                // Set Play button to go straight to the game
-                if (playBtn) {
-                    playBtn.onclick = (e) => {
-                        e.preventDefault();
-                        window.location.href = 'game.html';
-                    };
-                }
+
+                // Both buttons should now go straight to the game
+                const goToGame = (e) => { e.preventDefault(); window.location.href = 'game.html'; };
+                if (playBtn) playBtn.onclick = goToGame;
                 return;
+            } else if (res.status === 401) {
+                // Token is invalid/expired, clear it to stay in sync
+                localStorage.removeItem("tb_token");
             }
         } catch (e) { console.error("Auth check failed", e); }
     }
 
-    // Default behavior for guest
-    if (playBtn) {
-        playBtn.onclick = (e) => {
-            e.preventDefault();
-            window.location.href = 'auth.html';
-        };
+    // Default behavior for guest: both go to auth
+    const goToAuth = (e) => { e.preventDefault(); window.location.href = 'auth.html'; };
+    if (playBtn) playBtn.onclick = goToAuth;
+}
+
+function initLiveStats() {
+    if (typeof io !== 'undefined') {
+        const socket = io();
+        socket.on("userCount", (count) => {
+            const el = document.getElementById('online-count');
+            if (el) el.innerText = count;
+        });
     }
 }
 
@@ -155,15 +162,17 @@ document.addEventListener('DOMContentLoaded', () => {
     Particles.init();
     ModalController.init();
     checkAuthState();
+    initLiveStats();
 
     const cards = document.querySelectorAll('.feature-card');
-    const types = ["How To Play", "Support", "Donate"];
-    const labels = ["Learn the rules and mechanics.", "Get help or report bugs.", "Support the creator."];
-    
-    cards.forEach((card, i) => {
-        if (!types[i]) return;
-        if (card.querySelector('h3')) card.querySelector('h3').innerText = types[i];
-        if (card.querySelector('p')) card.querySelector('p').innerText = labels[i];
-        card.onclick = () => ModalController.show(types[i]);
+    cards.forEach((card) => {
+        const titleElement = card.querySelector('h3');
+        if (!titleElement) return;
+
+        const title = titleElement.innerText.trim();
+        // If the title matches a key in modalInfo (How To Play, Support, Donate), show it
+        if (modalInfo[title]) {
+            card.onclick = () => ModalController.show(title);
+        }
     });
 });

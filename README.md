@@ -17,7 +17,13 @@ A minimalist tactical multiplayer game where deception is your greatest weapon. 
 2. **Configure Environment:**
    Create a `.env` file in the root directory and add your `DATABASE_URL`.
 
-3. **Run the Server:**
+3. **Initialize Database:**
+   Use the provided schema template to set up your PostgreSQL tables:
+   ```bash
+   psql -d your_database_name -f online/schema.sql
+   ```
+
+4. **Run the Server:**
    ```bash
    npm start
    ```
