@@ -19,7 +19,7 @@ const state = {
   board: null, // array of 16 symbols
   values: null, // symbol -> value map
   selectedTiles: [],
-  limit: window.GAME_CONFIG.TILES_TO_PICK,
+  limit: (window.GAME_CONFIG && window.GAME_CONFIG.TILES_TO_PICK) || 5,
   round: 1,
   roomCode: null,
 };
@@ -31,7 +31,8 @@ function setStatus(text) {
 
 function initGrid() {
   UI.grid.innerHTML = "";
-  for (let i = 0; i < window.GAME_CONFIG.TOTAL_TILES; i++) {
+  const totalTiles = (window.GAME_CONFIG && window.GAME_CONFIG.TOTAL_TILES) || 16;
+  for (let i = 0; i < totalTiles; i++) {
     const tile = document.createElement("div");
     tile.className = "tile";
     const sym = state.board?.[i];

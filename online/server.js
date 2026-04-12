@@ -24,6 +24,15 @@ app.get("/landingpage.html", (req, res) => {
   res.redirect(301, "/");
 });
 
+// Handle clean routes for the frontend
+app.get("/auth", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "auth.html"));
+});
+
+app.get("/lobby", (req, res) => {
+  res.sendFile(path.join(__dirname, "public", "game.html"));
+});
+
 // Serve the browser client
 app.use(express.static(path.join(__dirname, "public")));
 
