@@ -12,6 +12,10 @@ const UI = {
   settingsCont: document.getElementById("lobby-settings"),
   presetBtns: document.querySelectorAll(".btn-preset"),
   presetDesc: document.getElementById("preset-description"),
+  resultOverlay: document.getElementById("result-overlay"),
+  resultTitle: document.getElementById("result-title"),
+  resultScores: document.getElementById("result-scores"),
+  btnReturnLobby: document.getElementById("btn-return-lobby"),
 };
 
 const state = {
@@ -266,10 +270,26 @@ function connectSocket() {
   });
 
   state.socket.on("gameOver", (data) => {
+    const players = data?.players || [];
+    const totals = data?.totals || {};
     const myId = state.socket.id;
-    const myTotal = data?.totals?.[myId] ?? 0;
-    UI.title.innerText = "Game Over";
-    setStatus(`Final score: ${myTotal}.`);
+
+    // Sort players by score to find winner
+    const sorted = [...players].sort((a, b) => (totals[b.socketId] || 0) - (totals[a.socketId] || 0));
+    const winner = sorted[0];
+    const isTie = sorted.length === 2 && totals[sorted[0].socketId] === totals[sorted[1].socketId];
+
+    UI.resultTitle.innerText = isTie ? "DRAW" : (winner.socketId === myId ? "VICTORY" : "DEFEAT");
+    UI.resultTitle.style.color = isTie ? "#818384" : (winner.socketId === myId ? "#fff" : "#ff4d4d");
+    
+    UI.resultScores.innerHTML = sorted.map(p => `
+      <div class="result-score-row">
+        <span>${p.username.toUpperCase()}</span>
+        <strong>${totals[p.socketId] || 0}</strong>
+      </div>
+    `).join('');
+
+    UI.resultOverlay.style.display = "flex";
     showAction(false);
   });
 
@@ -279,6 +299,13 @@ function connectSocket() {
     showAction(false);
   });
 }
+
+UI.btnReturnLobby.onclick = () => {
+  UI.resultOverlay.style.display = "none";
+  UI.grid.style.display = "none";
+  UI.lobby.style.display = "block";
+  UI.title.innerText = "TILE BATTLE";
+};
 
 UI.actionBtn.onclick = () => {
   if (!state.socket) return;

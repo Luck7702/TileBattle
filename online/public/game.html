@@ -75,8 +75,18 @@
         <p id="room-status" style="margin-top: 15px; font-size: 14px; color: #818384;"></p>
       </div>
 
-      <button id="action-btn" style="display: none;">Lock In</button>
       <div id="grid" style="display: none;"></div>
+      <button id="action-btn" style="display: none;">Lock In</button>
+
+      <!-- Result Card Overlay -->
+      <div id="result-overlay" class="modal-overlay" style="display: none; background: rgba(18, 18, 19, 0.95);">
+        <div class="auth-card" style="border-color: #fff; max-width: 450px;">
+          <h1 id="result-title" style="font-size: 32px; letter-spacing: 2px;">VICTORY</h1>
+          <p id="result-subtitle" style="color: #818384; margin-bottom: 24px;">Final Score Summary</p>
+          <div id="result-scores" style="margin-bottom: 30px;"></div>
+          <button id="btn-return-lobby" style="width: 100%; padding: 16px;">RETURN TO LOBBY</button>
+        </div>
+      </div>
     </div>
 
     <script src="config.js"></script>

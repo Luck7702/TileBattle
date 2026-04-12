@@ -275,7 +275,16 @@ function calculateScores(match) {
 
     roomEmit(match.code, "gameOver", {
       rounds: match.settings.maxRounds,
+      players: match.players.map(id => ({ socketId: id, username: match.data[id].username })),
       totals: { [match.players[0]]: match.data[match.players[0]].score, [match.players[1]]: match.data[match.players[1]].score },
+    });
+
+    // Reset match state for rematch in the same room
+    match.round = 1;
+    match.phase = "WAITING";
+    match.players.forEach(id => {
+      match.data[id].score = 0;
+      match.data[id].ready = false;
     });
     return;
   }
