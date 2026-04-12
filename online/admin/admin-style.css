@@ -1,0 +1,78 @@
+/* Admin-Specific Styles for TileBattle */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: system-ui, -apple-system, sans-serif;
+    background: #0f0f0f;
+    color: #fff;
+    min-height: 100vh;
+}
+
+/* Auth / Login Card */
+.auth-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+}
+
+.auth-card {
+    background: #1a1a1a;
+    padding: 40px;
+    border-radius: 8px;
+    border: 1px solid #333;
+    width: 100%;
+    max-width: 400px;
+    text-align: center;
+}
+
+.row { margin: 20px 0; display: flex; flex-direction: column; gap: 10px; }
+
+input {
+    background: #000;
+    border: 1px solid #333;
+    color: #fff;
+    padding: 12px;
+    border-radius: 4px;
+    width: 100%;
+}
+
+button {
+    cursor: pointer;
+    font-weight: 700;
+    transition: opacity 0.2s;
+    border: none;
+    border-radius: 4px;
+    padding: 12px;
+}
+
+button:hover { opacity: 0.8; }
+
+/* Dashboard Layout */
+.admin-container { 
+    max-width: 1000px; 
+    margin: 40px auto; 
+    padding: 20px; 
+}
+
+.header-flex { 
+    display: flex; 
+    justify-content: space-between; 
+    align-items: center; 
+    border-bottom: 1px solid #333;
+    padding-bottom: 20px;
+}
+
+/* Tables */
+table { width: 100%; border-collapse: collapse; margin-top: 20px; background: #1a1a1a; }
+th, td { text-align: left; padding: 12px; border-bottom: 1px solid #333; }
+th { color: #ff4d4d; text-transform: uppercase; font-size: 0.8rem; letter-spacing: 1px; }
+td { font-size: 0.95rem; color: #e0e0e0; }
+
+.btn-delete { 
+    background: #ff4d4d; 
+    color: white; 
+    padding: 6px 12px; 
+    font-size: 12px;
+    text-transform: uppercase;
+}

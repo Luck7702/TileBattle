@@ -1,11 +1,20 @@
-const token = localStorage.getItem("tb_token");
+const token = localStorage.getItem("tb_admin_token");
+
+if (!token) {
+    window.location.href = "/admin/login";
+}
 
 async function loadUsers() {
     try {
         const res = await fetch('/api/admin/users', {
             headers: { 'Authorization': `Bearer ${token}` }
         });
-        if (!res.ok) throw new Error("Unauthorized access");
+        
+        if (res.status === 401 || res.status === 403) {
+            localStorage.removeItem("tb_admin_token");
+            window.location.href = "/admin/login";
+            return;
+        }
         
         const users = await res.json();
         const tbody = document.getElementById('user-table-body');
@@ -15,7 +24,7 @@ async function loadUsers() {
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td>${u.id}</td>
-                <td>${u.username} ${u.is_admin ? '<span class="badge">ADMIN</span>' : ''}</td>
+                <td>${u.username}</td>
                 <td>${u.wins}</td>
                 <td>${u.rank_points}</td>
                 <td>
@@ -26,7 +35,7 @@ async function loadUsers() {
         });
         document.getElementById('admin-status').innerText = `Managing ${users.length} users`;
     } catch (e) {
-        window.location.href = "/lobby";
+        window.location.href = "/admin/login";
     }
 }
 

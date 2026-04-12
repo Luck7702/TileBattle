@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login | TileBattle</title>
+    <link rel="stylesheet" href="/admin-style.css">
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-card" style="border-color: #ff4d4d;">
+            <h2 style="color: #ff4d4d;">ADMIN ACCESS</h2>
+            <p id="info" style="color: #818384; margin-bottom: 20px;">Secure Management Portal</p>
+            
+            <div class="row">
+                <input id="user" placeholder="Admin Username" />
+                <input id="pass" placeholder="Password" type="password" />
+            </div>
+            
+            <button id="login-btn" style="width: 100%; background: #ff4d4d; color: white;">AUTHORIZE</button>
+        </div>
+    </div>
+
+    <script>
+        document.getElementById('login-btn').onclick = async () => {
+            const username = document.getElementById('user').value;
+            const password = document.getElementById('pass').value;
+            const info = document.getElementById('info');
+
+            try {
+                const res = await fetch('/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+                const data = await res.json();
+
+                if (res.ok && data.token) {
+                    localStorage.setItem('tb_admin_token', data.token);
+                    window.location.href = '/admin';
+                } else {
+                    info.innerText = data.error || 'Login failed';
+                    info.style.color = '#ff4d4d';
+                }
+            } catch (e) {
+                info.innerText = 'Server error';
+            }
+        };
+        
+        document.querySelectorAll('input').forEach(i => {
+            i.onkeypress = (e) => { if(e.key === 'Enter') document.getElementById('login-btn').click(); };
+        });
+    </script>
+</body>
+</html>

@@ -24,19 +24,6 @@ app.get("/landingpage.html", (req, res) => {
   res.redirect(301, "/");
 });
 
-// Professional Clean Routes
-app.get("/lobby", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "game.html"));
-});
-
-app.get("/auth", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "auth.html"));
-});
-
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "admin.html"));
-});
-
 // Serve the browser client
 app.use(express.static(path.join(__dirname, "public")));
 
@@ -63,7 +50,7 @@ async function getUserByUsername(username) {
 
 async function getUserById(id) {
   const res = await pool.query(`
-    SELECT id, username, wins, losses, rank_points, created_at, is_admin,
+    SELECT id, username, wins, losses, rank_points, created_at,
     (SELECT COUNT(*) + 1 FROM users u2 
      WHERE u2.rank_points > u1.rank_points 
      OR (u2.rank_points = u1.rank_points AND u2.wins > u1.wins)) as global_rank
@@ -71,33 +58,6 @@ async function getUserById(id) {
   `, [id]);
   return res.rows[0] || null;
 }
-
-// Middleware to protect admin routes
-async function adminOnly(req, res, next) {
-  const token = parseAuthHeader(req);
-  if (!token) return res.status(401).json({ error: "unauthorized" });
-  try {
-    const payload = verifyToken(token);
-    const user = await getUserById(Number(payload.sub || payload.id));
-    if (!user || !user.is_admin) return res.status(403).json({ error: "forbidden" });
-    req.user = user;
-    next();
-  } catch {
-    res.status(401).json({ error: "invalid_token" });
-  }
-}
-
-app.get("/api/admin/users", adminOnly, async (req, res) => {
-  const result = await pool.query("SELECT id, username, wins, losses, rank_points, is_admin FROM users ORDER BY id ASC");
-  res.json(result.rows);
-});
-
-app.delete("/api/admin/users/:id", adminOnly, async (req, res) => {
-  const targetId = Number(req.params.id);
-  if (targetId === req.user.id) return res.status(400).json({ error: "cannot_delete_self" });
-  await pool.query("DELETE FROM users WHERE id = $1", [targetId]);
-  res.json({ success: true });
-});
 
 app.post("/api/register", async (req, res) => {
   const username = String(req.body?.username || "").trim();

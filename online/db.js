@@ -32,7 +32,14 @@ async function migrate(pool) {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS wins INTEGER DEFAULT 0;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS losses INTEGER DEFAULT 0;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_points INTEGER DEFAULT 1000;`);
-  await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS is_admin BOOLEAN DEFAULT FALSE;`);
+
+  await pool.query(`
+    create table if not exists admins (
+      id serial primary key,
+      username text not null unique,
+      password_hash text not null
+    );
+  `);
 
   await pool.query(`
     create table if not exists rooms (

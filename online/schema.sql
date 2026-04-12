@@ -8,7 +8,14 @@ CREATE TABLE IF NOT EXISTS users (
     wins INTEGER DEFAULT 0,
     losses INTEGER DEFAULT 0,
     rank_points INTEGER DEFAULT 1000,
-    is_admin BOOLEAN DEFAULT FALSE,
+    created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Separate entity for Administrators
+CREATE TABLE IF NOT EXISTS admins (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(32) UNIQUE NOT NULL,
+    password_hash TEXT NOT NULL,
     created_at TIMESTAMPTZ DEFAULT CURRENT_TIMESTAMP
 );
 
