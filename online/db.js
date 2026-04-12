@@ -22,7 +22,7 @@ async function migrate(pool) {
   await pool.query(`
     create table if not exists users (
       id bigserial primary key,
-      username text not null unique,
+      username varchar(16) not null unique,
       password_hash text not null,
       created_at timestamptz not null default now()
     );
@@ -32,19 +32,21 @@ async function migrate(pool) {
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS wins INTEGER DEFAULT 0;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS losses INTEGER DEFAULT 0;`);
   await pool.query(`ALTER TABLE users ADD COLUMN IF NOT EXISTS rank_points INTEGER DEFAULT 1000;`);
+  await pool.query(`CREATE INDEX IF NOT EXISTS idx_user_rank ON users (rank_points DESC, wins DESC);`);
 
   await pool.query(`
     create table if not exists admins (
       id serial primary key,
-      username text not null unique,
-      password_hash text not null
+      username varchar(32) not null unique,
+      password_hash text not null,
+      created_at timestamptz not null default now()
     );
   `);
 
   await pool.query(`
     create table if not exists rooms (
       id bigserial primary key,
-      code text not null unique,
+      code text unique not null,
       owner_user_id bigint not null references users(id) on delete cascade,
       created_at timestamptz not null default now()
     );
