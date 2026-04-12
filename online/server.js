@@ -315,7 +315,16 @@ function broadcastUserCount() {
 }
 
 io.on("connection", (socket) => {
-  if (socket.data.user) socket.emit("me", { user: socket.data.user });
+  if (socket.data.user) {
+    // Enforce single session: disconnect older sockets for the same user ID
+    io.sockets.sockets.forEach((s) => {
+      if (s.data.user?.id === socket.data.user.id && s.id !== socket.id) {
+        s.emit("session:superseded");
+        s.disconnect(true);
+      }
+    });
+    socket.emit("me", { user: socket.data.user });
+  }
   broadcastUserCount();
 
   socket.on("room:create", async () => {
@@ -351,6 +360,15 @@ io.on("connection", (socket) => {
 
     if (!match.players.includes(socket.id)) {
       if (match.players.length >= 2) return socket.emit("room:error", { error: "room_full" });
+
+      // Prevent the same user from joining the same room twice (e.g., from different tabs/devices)
+      const isSelfAlreadyInRoom = match.players.some(sid => {
+        const otherSocket = io.sockets.sockets.get(sid);
+        return otherSocket && otherSocket.data.user?.id === socket.data.user.id;
+      });
+
+      if (isSelfAlreadyInRoom) return socket.emit("room:error", { error: "already_in_room" });
+
       match.players.push(socket.id);
       match.data[socket.id] = { 
         username: socket.data.user.username, 

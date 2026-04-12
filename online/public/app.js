@@ -93,6 +93,12 @@ function connectSocket() {
     }
   });
 
+  state.socket.on("session:superseded", () => {
+    alert("Logged out: You have logged in from another device or tab.");
+    localStorage.removeItem("tb_token");
+    window.location.href = "/auth";
+  });
+
   document.getElementById("logout-link").onclick = (e) => {
     e.preventDefault();
     localStorage.removeItem("tb_token");
