@@ -210,6 +210,38 @@ a, button, .tile, .feature-card {
   background: rgba(255,255,255,0.02);
 }
 
+/* Preset Config Styling */
+.preset-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1px;
+    background: #3a3a3c;
+    border: 1px solid #3a3a3c;
+    border-radius: 8px;
+    overflow: hidden;
+}
+.btn-preset {
+    background: #1a1a1b;
+    border: none;
+    border-radius: 0;
+    color: #818384;
+    font-size: 10px;
+    padding: 12px 5px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+}
+.btn-preset:hover:not(:disabled):not(.active) { background: #242426; color: #fff; }
+.btn-preset.active { color: #121213; background: #fff; }
+.btn-preset:disabled { cursor: default; opacity: 1; }
+
+.preset-desc-text {
+    margin-top: 12px;
+    font-size: 10px;
+    color: #565758;
+    min-height: 1.2em;
+    font-weight: 600;
+}
+
 .profile-panel {
     text-align: left;
     padding: 20px;
@@ -257,10 +289,11 @@ button {
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 #grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
   gap: 8px;
-  max-width: 420px;
+  width: 100%;
+  max-width: 450px;
   margin: 14px auto 0;
+  justify-content: center;
 }
 .tile {
   aspect-ratio: 1 / 1;
@@ -278,8 +311,47 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
     background: rgba(255,255,255,0.05);
     border-color: #818384;
 }
+
 .tile.selected { background: #565758; border-color: #565758; }
 .tile.correct-location { background: #fff; border-color: #fff; color: #121213; }
+/* High Stakes Tile Rarities */
+.uncommon-tile {
+    border-color: #4a9eff !important;
+    color: #4a9eff;
+}
+
+.super-tile {
+    border-color: #ffcc00 !important;
+    color: #ffcc00;
+    background: linear-gradient(135deg, rgba(255,204,0,0.1) 0%, rgba(0,0,0,0) 50%, rgba(255,204,0,0.1) 100%);
+    box-shadow: 0 0 15px rgba(255, 204, 0, 0.2);
+    animation: gold-shine 3s infinite;
+    position: relative;
+    overflow: hidden;
+}
+
+@keyframes gold-shine {
+    0% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.2); }
+    50% { box-shadow: 0 0 20px rgba(255, 204, 0, 0.5); border-color: #fff !important; }
+    100% { box-shadow: 0 0 5px rgba(255, 204, 0, 0.2); }
+}
+
+.super-tile::after {
+    content: '';
+    position: absolute;
+    top: -100%; left: -100%;
+    width: 300%; height: 300%;
+    background: linear-gradient(45deg, transparent 45%, rgba(255,255,255,0.3) 50%, transparent 55%);
+    transition: all 0.5s;
+    animation: sweep 4s infinite;
+}
+
+@keyframes sweep {
+    0% { transform: translate(-20%, -20%); }
+    20% { transform: translate(20%, 20%); }
+    100% { transform: translate(20%, 20%); }
+}
+
 #action-btn { display: none; margin: 14px auto 0; }
 
 /* Auth Page Specifics */

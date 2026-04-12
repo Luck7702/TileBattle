@@ -1,20 +1,17 @@
 require('dotenv').config(); 
 const path = require("path");
 const http = require("http");
-const crypto = require("crypto");
 
 const express = require("express");
 const { Server } = require("socket.io");
 
 const { getPool, migrate } = require("./db");
 const { hashPassword, signToken, verifyPassword, verifyToken } = require("./auth");
+const { makeRoomCode, newBoard, calculateRoundScore, SYMBOL_VALUES } = require("./logic");
 
 const PORT = Number(process.env.PORT || 3000);
 const GAME_LIMIT = Number(process.env.GAME_LIMIT || 5);
 const MAX_ROUNDS = Number(process.env.MAX_ROUNDS || 3);
-
-const SYMBOLS = ["1", "2", "3", "4"];
-const SYMBOL_VALUES = { "1": 1, "2": 2, "3": 3, "4": 4 };
   
 const app = express();
 app.use(express.json());
@@ -38,11 +35,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 // DB
 const pool = getPool();
-
-function makeRoomCode() {
-  // 6 chars, URL/voice friendly enough for a first pass.
-  return crypto.randomBytes(4).toString("hex").slice(0, 6).toUpperCase();
-}
 
 function parseAuthHeader(req) {
   const header = req.headers.authorization || "";
@@ -150,20 +142,43 @@ io.use(async (socket, next) => {
 // In-memory room match state (DB is for accounts + room ownership only)
 const roomMatches = new Map(); // code -> matchState
 
-function getOrCreateMatch(code) {
+function getOrCreateMatch(code, ownerId = null) {
   if (roomMatches.has(code)) return roomMatches.get(code);
   const match = {
     code,
+    ownerId,
+    settings: {
+      boardSize: 16,
+      tilesToPick: GAME_LIMIT,
+      maxRounds: MAX_ROUNDS
+    },
     round: 1,
     phase: "WAITING", // WAITING -> DEFEND -> ATTACK -> RESULT -> (next round or GAME_OVER)
     players: [], // socket.id
     data: {}, // socket.id -> { username, ready, defends, attacks, score }
-    board: null, // array of 16 symbols
+    board: null,
     defenderId: null,
     attackerId: null,
   };
   roomMatches.set(code, match);
   return match;
+}
+
+function broadcastRoomState(code) {
+  const match = roomMatches.get(code);
+  if (!match) return;
+  roomEmit(code, "room:state", {
+    code: match.code,
+    players: match.players.map((id) => ({ 
+      socketId: id, 
+      username: match.data[id].username, 
+      ready: match.data[id].ready 
+    })),
+    phase: match.phase,
+    round: match.round,
+    settings: match.settings,
+    ownerId: match.ownerId
+  });
 }
 
 function roomEmit(code, event, payload) {
@@ -174,18 +189,17 @@ function emitTo(socketId, event, payload) {
   io.to(socketId).emit(event, payload);
 }
 
-function newBoard() {
-  return Array.from({ length: 16 }, () => SYMBOLS[Math.floor(Math.random() * SYMBOLS.length)]);
-}
-
 function startNewRound(match) {
-  if (match.round > MAX_ROUNDS) return;
+  if (match.round > match.settings.maxRounds) return;
   const [p1, p2] = match.players;
-  match.board = newBoard();
+  match.board = newBoard(match.settings.boardSize);
 
   // Swap roles each round.
   match.defenderId = match.round % 2 === 1 ? p1 : p2;
   match.attackerId = match.defenderId === p1 ? p2 : p1;
+
+  const defenderLimit = match.settings.tilesToPick;
+  const attackerLimit = defenderLimit;
 
   match.phase = "DEFEND";
 
@@ -193,7 +207,7 @@ function startNewRound(match) {
     phase: "DEFEND",
     role: "DEFENDER",
     round: match.round,
-    limit: GAME_LIMIT,
+    limit: defenderLimit,
     board: match.board,
     values: SYMBOL_VALUES,
   });
@@ -201,7 +215,7 @@ function startNewRound(match) {
     phase: "DEFEND",
     role: "ATTACKER",
     round: match.round,
-    limit: GAME_LIMIT,
+    limit: attackerLimit,
     board: match.board,
     values: SYMBOL_VALUES,
   });
@@ -211,36 +225,28 @@ function calculateScores(match) {
   const defenderId = match.defenderId;
   const attackerId = match.attackerId;
 
-  const defended = match.data[defenderId].defends;
-  const attacked = match.data[attackerId].attacks;
+  const { attackerPoints, defenderPoints } = calculateRoundScore(
+    match.data[defenderId].defends,
+    match.data[attackerId].attacks,
+    match.board
+  );
 
-  const hitSet = new Set(attacked.filter((i) => defended.includes(i)));
-  const missSet = new Set(defended.filter((i) => !hitSet.has(i)));
-
-  const valueAt = (tileIdx) => {
-    const sym = match.board?.[tileIdx];
-    return SYMBOL_VALUES[sym] || 0;
-  };
-
-  const attackerRoundPoints = Array.from(hitSet).reduce((sum, i) => sum + valueAt(i), 0);
-  const defenderRoundPoints = Array.from(missSet).reduce((sum, i) => sum + valueAt(i), 0);
-
-  match.data[attackerId].score += attackerRoundPoints;
-  match.data[defenderId].score += defenderRoundPoints;
+  match.data[attackerId].score += attackerPoints;
+  match.data[defenderId].score += defenderPoints;
 
   match.phase = "RESULT";
   
   roomEmit(match.code, "roundResult", {
-    roundPoints: { [attackerId]: attackerRoundPoints, [defenderId]: defenderRoundPoints },
+    roundPoints: { [attackerId]: attackerPoints, [defenderId]: defenderPoints },
     totals: { [attackerId]: match.data[attackerId].score, [defenderId]: match.data[defenderId].score },
     // Reveal: to each player, show the tiles the defender protected (same as “actualTiles” before)
-    defendedTiles: defended,
+    defendedTiles: match.data[defenderId].defends,
     board: match.board,
     values: SYMBOL_VALUES,
     roles: { defenderId, attackerId },
   });
 
-  const isLastRound = match.round >= MAX_ROUNDS;
+  const isLastRound = match.round >= match.settings.maxRounds;
   match.players.forEach((id) => {
     match.data[id].defends = [];
     match.data[id].attacks = [];
@@ -268,7 +274,7 @@ function calculateScores(match) {
     }
 
     roomEmit(match.code, "gameOver", {
-      rounds: MAX_ROUNDS,
+      rounds: match.settings.maxRounds,
       totals: { [match.players[0]]: match.data[match.players[0]].score, [match.players[1]]: match.data[match.players[1]].score },
     });
     return;
@@ -280,7 +286,7 @@ function calculateScores(match) {
 
 function checkPhaseComplete(match, phase) {
   if (phase === "DEFEND") {
-    const defenderReady = match.data[match.defenderId].defends.length === GAME_LIMIT;
+    const defenderReady = match.data[match.defenderId].defends.length === match.settings.tilesToPick;
     if (!defenderReady) return;
 
     match.phase = "ATTACK";
@@ -288,7 +294,7 @@ function checkPhaseComplete(match, phase) {
       phase: "ATTACK",
       role: "DEFENDER",
       round: match.round,
-      limit: GAME_LIMIT,
+      limit: match.settings.tilesToPick,
       board: match.board,
       values: SYMBOL_VALUES,
     });
@@ -296,7 +302,7 @@ function checkPhaseComplete(match, phase) {
       phase: "ATTACK",
       role: "ATTACKER",
       round: match.round,
-      limit: GAME_LIMIT,
+      limit: match.settings.tilesToPick,
       board: match.board,
       values: SYMBOL_VALUES,
     });
@@ -304,7 +310,8 @@ function checkPhaseComplete(match, phase) {
   }
 
   if (phase === "ATTACK") {
-    const attackerReady = match.data[match.attackerId].attacks.length === GAME_LIMIT;
+    const attackerLimit = match.settings.tilesToPick;
+    const attackerReady = match.data[match.attackerId].attacks.length === attackerLimit;
     if (!attackerReady) return;
     calculateScores(match);
   }
@@ -347,10 +354,11 @@ io.on("connection", (socket) => {
     const roomCode = String(code || "").trim().toUpperCase();
     if (!roomCode) return socket.emit("room:error", { error: "missing_code" });
 
-    const exists = await pool.query("select id from rooms where code=$1", [roomCode]);
+    const exists = await pool.query("select id, owner_user_id from rooms where code=$1", [roomCode]);
     if (!exists.rows[0]) return socket.emit("room:error", { error: "room_not_found" });
+    const ownerId = Number(exists.rows[0].owner_user_id);
 
-    const match = getOrCreateMatch(roomCode);
+    const match = getOrCreateMatch(roomCode, ownerId);
 
     // Leave previous room if any
     if (socket.data.roomCode) socket.leave(socket.data.roomCode);
@@ -379,16 +387,26 @@ io.on("connection", (socket) => {
       };
     }
 
-    roomEmit(roomCode, "room:state", {
-      code: roomCode,
-      players: match.players.map((id) => ({ 
-        socketId: id, 
-        username: match.data[id].username, 
-        ready: match.data[id].ready 
-      })),
-      phase: match.phase,
-      round: match.round,
-    });
+    broadcastRoomState(roomCode);
+  });
+
+  socket.on("room:settings", (newSettings) => {
+    const code = socket.data.roomCode;
+    if (!code || !roomMatches.has(code)) return;
+    const match = roomMatches.get(code);
+
+    // Fix: Type-safe comparison for BIGINT IDs (Number vs String)
+    if (String(match.ownerId) !== String(socket.data.user.id)) return;
+    if (match.phase !== "WAITING") return;
+
+    // Validate and update settings
+    const boardSize = Math.min(Math.max(Number(newSettings.boardSize || 16), 4), 64);
+    const tilesToPick = Math.min(Math.max(Number(newSettings.tilesToPick || 5), 1), boardSize - 1);
+    const maxRounds = Math.min(Math.max(Number(newSettings.maxRounds || 3), 1), 10);
+
+    match.settings = { boardSize, tilesToPick, maxRounds };
+
+    broadcastRoomState(code);
   });
 
   socket.on("room:ready", () => {
@@ -399,16 +417,7 @@ io.on("connection", (socket) => {
 
     match.data[socket.id].ready = !match.data[socket.id].ready;
 
-    roomEmit(code, "room:state", {
-      code: code,
-      players: match.players.map((id) => ({ 
-        socketId: id, 
-        username: match.data[id].username, 
-        ready: match.data[id].ready 
-      })),
-      phase: match.phase,
-      round: match.round,
-    });
+    broadcastRoomState(code);
 
     const allReady = match.players.length === 2 && match.players.every(id => match.data[id].ready);
     if (allReady && match.phase === "WAITING") {

@@ -9,10 +9,14 @@ const UI = {
   lobbyRoom: document.getElementById("lobby-room"),
   playerList: document.getElementById("player-list"),
   roomCodeInput: document.getElementById("room-code"),
+  settingsCont: document.getElementById("lobby-settings"),
+  presetBtns: document.querySelectorAll(".btn-preset"),
+  presetDesc: document.getElementById("preset-description"),
 };
 
 const state = {
   token: localStorage.getItem("tb_token") || null,
+  user: null,
   socket: null,
   currentPhase: "WAITING",
   role: null, // DEFENDER | ATTACKER
@@ -22,6 +26,17 @@ const state = {
   limit: (window.GAME_CONFIG && window.GAME_CONFIG.TILES_TO_PICK) || 5,
   round: 1,
   roomCode: null,
+  settings: {
+    boardSize: 16,
+    tilesToPick: 5,
+    maxRounds: 3
+  }
+};
+
+const PRESETS = {
+  classic: { boardSize: 16, tilesToPick: 5, maxRounds: 3, desc: "Standard 4x4 tactical match. 3 Rounds." },
+  blitz: { boardSize: 16, tilesToPick: 3, maxRounds: 5, desc: "Fast-paced 4x4. Fewer tiles, more rounds." },
+  pro: { boardSize: 36, tilesToPick: 7, maxRounds: 4, desc: "Advanced 6x6 strategic battle. 4 Rounds." }
 };
 
 function setStatus(text) {
@@ -31,12 +46,23 @@ function setStatus(text) {
 
 function initGrid() {
   UI.grid.innerHTML = "";
-  const totalTiles = (window.GAME_CONFIG && window.GAME_CONFIG.TOTAL_TILES) || 16;
+  const totalTiles = state.settings.boardSize;
+  
+  // Dynamic layout calculation
+  const cols = Math.floor(Math.sqrt(totalTiles));
+  UI.grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
   for (let i = 0; i < totalTiles; i++) {
     const tile = document.createElement("div");
     tile.className = "tile";
-    const sym = state.board?.[i];
-    tile.innerText = sym || "";
+    const tileData = state.board?.[i];
+
+    if (tileData) {
+      // Fallback to symbol if value is missing, prevents "undefined"
+      tile.innerText = tileData.value !== undefined ? tileData.value : tileData;
+      if (tileData.rarity && tileData.rarity !== "common") tile.classList.add(`${tileData.rarity}-tile`);
+    }
+
     tile.onclick = () => toggleTile(i, tile);
     UI.grid.appendChild(tile);
   }
@@ -106,6 +132,7 @@ function connectSocket() {
   };
 
   state.socket.on("me", ({ user }) => {
+    state.user = user;
     UI.lobby.style.display = "block";
     UI.lobbySetup.style.display = "block";
     UI.lobbyRoom.style.display = "none";
@@ -135,16 +162,37 @@ function connectSocket() {
     document.getElementById("btn-join-room").disabled = false;
   });
 
-  state.socket.on("room:state", ({ code, phase, round, players }) => {
+  state.socket.on("room:state", ({ code, phase, round, players, settings, ownerId }) => {
     state.roomCode = code;
     state.round = round;
     state.currentPhase = phase;
+    if (settings) state.settings = settings;
+
     UI.grid.style.display = "none";
     UI.roomCodeInput.value = "";
     
     UI.lobbySetup.style.display = "none";
     UI.lobbyRoom.style.display = "block";
     document.getElementById("display-room-code").innerText = `ROOM: ${code}`;
+
+    // Toggle settings visibility based on ownership
+    const isOwner = ownerId && state.user && String(state.user.id) === String(ownerId);
+    if (UI.settingsCont) {
+        UI.settingsCont.style.display = isOwner ? "block" : "none";
+
+        // Highlight the active preset button
+        UI.presetBtns.forEach(btn => {
+            const pKey = btn.dataset.preset;
+            const p = PRESETS[pKey];
+            const isActive = p && 
+                p.boardSize === state.settings.boardSize && 
+                p.tilesToPick === state.settings.tilesToPick && 
+                p.maxRounds === state.settings.maxRounds;
+            
+            btn.classList.toggle("active", isActive);
+            btn.disabled = !isOwner; // Only owner can click
+        });
+    }
 
     UI.playerList.innerHTML = "";
     players.forEach(p => {
@@ -167,7 +215,7 @@ function connectSocket() {
     state.currentPhase = data.phase; // DEFEND | ATTACK
     state.role = data.role; // DEFENDER | ATTACKER
     state.round = data.round;
-    state.limit = data.limit;
+    state.limit = data.limit || state.settings.tilesToPick;
     state.board = data.board;
     state.values = data.values;
     state.selectedTiles = [];
@@ -251,6 +299,27 @@ document.getElementById("btn-ready").onclick = () => {
   if (!state.socket) return;
   state.socket.emit("room:ready");
 };
+
+const applyPreset = (presetKey) => {
+    if (!state.socket) return;
+    const preset = PRESETS[presetKey];
+    if (preset) {
+        state.socket.emit("room:settings", preset);
+    }
+};
+
+UI.presetBtns.forEach(btn => {
+    btn.onclick = () => {
+        applyPreset(btn.dataset.preset);
+    };
+    btn.onmouseenter = () => {
+        const p = PRESETS[btn.dataset.preset];
+        if (p && UI.presetDesc) UI.presetDesc.innerText = p.desc;
+    };
+    btn.onmouseleave = () => {
+        if (UI.presetDesc) UI.presetDesc.innerText = "";
+    };
+});
 
 document.getElementById("btn-copy-code").onclick = () => {
   if (!state.roomCode) return;

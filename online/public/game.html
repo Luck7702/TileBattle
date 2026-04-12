@@ -54,6 +54,17 @@
             <h2 id="display-room-code">ROOM: ######</h2>
             <button id="btn-copy-code" class="btn-copy">COPY</button>
           </div>
+          
+          <div id="lobby-settings" class="panel" style="display: none; border-color: rgba(255,255,255,0.1);">
+            <h4 style="font-size: 9px; color: #565758; margin-bottom: 12px; letter-spacing: 1px;">MATCH PRESET (OWNER ONLY)</h4>
+            <div class="preset-grid">
+              <button class="btn-preset active" data-preset="classic">CLASSIC (4x4)</button>
+              <button class="btn-preset" data-preset="blitz">BLITZ (4x4)</button>
+              <button class="btn-preset" data-preset="pro">PRO (6x6)</button>
+            </div>
+            <p id="preset-description" class="preset-desc-text"></p>
+          </div>
+
           <div id="player-list" class="player-list">
             <!-- Players injected here -->
           </div>
