@@ -199,12 +199,21 @@ a, button, .tile, .feature-card {
 .footer-main p { margin-bottom: 4px; }
 .version-watermark { font-family: monospace; font-size: 12px; letter-spacing: 1px; }
 
+/* Layout Wrapper for Side-by-Side */
+.game-layout {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+    flex-wrap: wrap; /* Stack on mobile */
+}
+
 .game-container { 
     width: 100%; 
     max-width: 650px; 
     padding: 20px; /* Reduced from 60px 20px */
     text-align: center; 
-    margin: 0 auto;
+    margin: 0;
     display: flex;
     flex-direction: column;
 }
@@ -448,6 +457,71 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 .auth-card input { width: 100%; margin-bottom: 10px; }
 .auth-toggle { margin-top: 20px; color: #818384; font-size: 14px; cursor: pointer; text-decoration: underline; }
 .auth-toggle:hover { color: #fff; }
+
+/* --- Chat Panel Fixes --- */
+.chat-panel {
+    width: 320px;
+    height: 600px;
+    background: #1a1a1b;
+    border: 1px solid #3a3a3c;
+    border-radius: 12px;
+    display: none; /* Controlled strictly by app.js */
+    flex-direction: column;
+    overflow: hidden;
+    margin-top: 20px;
+    align-self: flex-start;
+    animation: fadeInUp 0.4s ease forwards;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+}
+.chat-header {
+    padding: 12px;
+    font-size: 10px;
+    font-weight: 800;
+    letter-spacing: 2px;
+    border-bottom: 1px solid #3a3a3c;
+    color: #818384;
+    text-align: center;
+    background: #1a1a1b;
+}
+.chat-messages {
+    flex: 1;
+    padding: 15px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: #3a3a3c transparent;
+}
+.chat-msg { font-size: 13px; line-height: 1.5; word-break: break-word; color: #d1d1d1; }
+.chat-user { 
+    color: #818384; 
+    font-weight: 800; 
+    font-size: 10px; 
+    text-transform: uppercase; 
+    margin-right: 4px;
+}
+.chat-text { color: #fff; }
+.chat-input-row {
+    padding: 12px;
+    border-top: 1px solid #3a3a3c;
+    display: flex;
+    gap: 8px;
+    background: #121213;
+}
+.chat-input-row input { 
+    flex: 1; 
+    padding: 10px 12px; 
+    background: #1a1a1b; 
+    border: 1px solid #3a3a3c; 
+    border-radius: 6px; 
+    color: #fff;
+    font-size: 14px;
+}
+.chat-input-row button { padding: 0 15px; font-weight: 700; border-radius: 6px; font-size: 11px; }
+
+.chat-messages::-webkit-scrollbar { width: 4px; }
+.chat-messages::-webkit-scrollbar-thumb { background: #3a3a3c; border-radius: 2px; }
 
 @keyframes fadeInUp {
     from { opacity: 0; transform: translateY(20px); }

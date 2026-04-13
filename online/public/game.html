@@ -20,6 +20,7 @@
       </div>
     </nav>
 
+    <div class="game-layout">
     <div class="game-container">
       <div class="header">
         <div id="battle-scoreboard" class="scoreboard" style="display: none;">
@@ -95,6 +96,17 @@
           <p id="result-subtitle" style="color: #818384; margin-bottom: 24px;">Final Score Summary</p>
           <div id="result-scores" style="margin-bottom: 30px;"></div>
           <button id="btn-return-lobby" style="width: 100%; padding: 16px;">RETURN TO LOBBY</button>
+        </div>
+      </div>
+    </div>
+
+      <!-- Chat Panel -->
+      <div id="chat-panel" class="chat-panel" style="display: none;">
+        <div class="chat-header">COMMUNICATION UPLINK</div>
+        <div id="chat-messages" class="chat-messages"></div>
+        <div class="chat-input-row">
+            <input type="text" id="chat-input" placeholder="Type a message..." maxlength="150">
+            <button id="btn-chat-send">SEND</button>
         </div>
       </div>
     </div>

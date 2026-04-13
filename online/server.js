@@ -343,6 +343,18 @@ io.on("connection", (socket) => {
   }
   broadcastUserCount();
 
+  socket.on("room:chat", (message) => {
+    const code = socket.data.roomCode;
+    if (!code || !message || typeof message !== "string" || !socket.data.user) return;
+    const text = message.trim().substring(0, 140); // Standard tweet-like limit
+    if (!text) return;
+
+    roomEmit(code, "room:chat", {
+      username: socket.data.user.username,
+      text: text
+    });
+  });
+
   socket.on("room:create", async () => {
     if (!socket.data.user) return socket.emit("room:error", { error: "unauthorized" });
     const code = makeRoomCode();

@@ -22,6 +22,10 @@ UI.p1Name = document.getElementById("score-p1-name");
 UI.p1Val = document.getElementById("score-p1-val");
 UI.p2Name = document.getElementById("score-p2-name");
 UI.p2Val = document.getElementById("score-p2-val");
+UI.chatPanel = document.getElementById("chat-panel");
+UI.chatMessages = document.getElementById("chat-messages");
+UI.chatInput = document.getElementById("chat-input");
+UI.chatSendBtn = document.getElementById("btn-chat-send");
 
 const state = {
   token: localStorage.getItem("tb_token") || null,
@@ -119,6 +123,18 @@ function connectSocket() {
     console.log("Client Connected to Server!");
   });
 
+  state.socket.on("room:chat", ({ username, text }) => {
+    if (!UI.chatMessages) return;
+    const msgEl = document.createElement("div");
+    msgEl.className = "chat-msg";
+    const userSpan = `<span class="chat-user">${username}:</span>`;
+    const textSpan = `<span class="chat-text">${text}</span>`;
+    msgEl.innerHTML = `${userSpan} ${textSpan}`;
+    UI.chatMessages.appendChild(msgEl);
+    // Auto-scroll to bottom
+    UI.chatMessages.scrollTop = UI.chatMessages.scrollHeight;
+  });
+
   state.socket.on("connect_error", (err) => {
     console.error("Lobby Connection Error:", err.message);
     if (["invalid_token", "session_expired", "auth_failed"].includes(err.message)) {
@@ -160,11 +176,17 @@ function connectSocket() {
     }
 
     UI.roomStatus.innerText = "Ready to battle";
+
+    // Ensure chat is hidden in initial lobby setup
+    if (UI.chatPanel) UI.chatPanel.style.display = "none";
   });
 
   state.socket.on("room:created", ({ code }) => {
     UI.roomStatus.innerText = `Room created: ${code}`;
     state.socket.emit("room:join", { code });
+
+    // Ensure chat is hidden during the creation transition
+    if (UI.chatPanel) UI.chatPanel.style.display = "none";
   });
   state.socket.on("room:error", ({ error }) => {
     UI.roomStatus.innerText = `Room error: ${error}`;
@@ -184,6 +206,9 @@ function connectSocket() {
     
     UI.lobbySetup.style.display = "none";
     UI.lobbyRoom.style.display = "block";
+
+    // Explicitly hide chat while in the lobby/waiting room
+    if (UI.chatPanel) UI.chatPanel.style.display = "none";
     document.getElementById("display-room-code").innerText = `ROOM: ${code}`;
 
     // Toggle settings visibility based on ownership
@@ -235,6 +260,22 @@ function connectSocket() {
     UI.grid.style.display = "grid"; // Show grid when game starts
     initGrid();
     clearTileClasses();
+
+    // Show chat only when gameplay starts
+    if (UI.chatPanel) {
+      UI.chatPanel.style.display = "flex";
+      // If it's the very start of a match, clear old history and show system msg
+      if (state.round === 1 && state.currentPhase === "DEFEND") {
+        UI.chatMessages.innerHTML = "";
+        const sys = document.createElement("div");
+        sys.className = "chat-msg";
+        sys.style.color = "#4ade80";
+        sys.style.textAlign = "center";
+        sys.style.fontSize = "9px";
+        sys.innerText = "— SYSTEM: ENCRYPTED CHAT ESTABLISHED —";
+        UI.chatMessages.appendChild(sys);
+      }
+    }
 
     // Update Scoreboard UI
     if (state.players && state.players.length >= 2) {
@@ -324,6 +365,7 @@ function connectSocket() {
     UI.battleScoreboard.style.display = "none";
     setStatus("Opponent disconnected.");
     showAction(false);
+    if (UI.chatPanel) UI.chatPanel.style.display = "none";
   });
 }
 
@@ -333,6 +375,19 @@ UI.btnReturnLobby.onclick = () => {
   UI.battleScoreboard.style.display = "none";
   UI.lobby.style.display = "block";
   UI.title.innerText = "TILE BATTLE";
+  if (UI.chatPanel) UI.chatPanel.style.display = "none";
+};
+
+const handleSendChat = () => {
+  const msg = UI.chatInput?.value.trim();
+  if (msg && state.socket) {
+    state.socket.emit("room:chat", msg);
+    UI.chatInput.value = "";
+  }
+};
+if (UI.chatSendBtn) UI.chatSendBtn.onclick = handleSendChat;
+if (UI.chatInput) UI.chatInput.onkeypress = (e) => {
+  if (e.key === "Enter") handleSendChat();
 };
 
 UI.actionBtn.onclick = () => {
