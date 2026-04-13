@@ -207,6 +207,21 @@ a, button, .tile, .feature-card {
 }
 .header { padding-bottom: 12px; border-bottom: 1px solid #3a3a3c; margin-bottom: 14px; }
 #info { color: #818384; margin-top: 8px; }
+
+/* Scoreboard Styling */
+.scoreboard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 0 5px;
+}
+.score-player { display: flex; flex-direction: column; }
+.p-left { text-align: left; }
+.p-right { text-align: right; }
+.score-player span { font-size: 10px; color: #818384; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+.score-player strong { font-size: 28px; color: #fff; line-height: 1; margin-top: 4px; }
+
 .panel {
   border: 1px solid #3a3a3c;
   border-radius: 10px;

@@ -17,6 +17,11 @@ const UI = {
   resultScores: document.getElementById("result-scores"),
   btnReturnLobby: document.getElementById("btn-return-lobby"),
 };
+UI.battleScoreboard = document.getElementById("battle-scoreboard");
+UI.p1Name = document.getElementById("score-p1-name");
+UI.p1Val = document.getElementById("score-p1-val");
+UI.p2Name = document.getElementById("score-p2-name");
+UI.p2Val = document.getElementById("score-p2-val");
 
 const state = {
   token: localStorage.getItem("tb_token") || null,
@@ -30,6 +35,7 @@ const state = {
   limit: (window.GAME_CONFIG && window.GAME_CONFIG.TILES_TO_PICK) || 5,
   round: 1,
   roomCode: null,
+  players: [],
   settings: {
     boardSize: 16,
     tilesToPick: 5,
@@ -170,6 +176,7 @@ function connectSocket() {
     state.roomCode = code;
     state.round = round;
     state.currentPhase = phase;
+    state.players = players;
     if (settings) state.settings = settings;
 
     UI.grid.style.display = "none";
@@ -229,6 +236,17 @@ function connectSocket() {
     initGrid();
     clearTileClasses();
 
+    // Update Scoreboard UI
+    if (state.players && state.players.length >= 2) {
+      UI.battleScoreboard.style.display = "flex";
+      UI.p1Name.innerText = state.players[0].username;
+      UI.p2Name.innerText = state.players[1].username;
+      if (state.round === 1 && state.currentPhase === "DEFEND") {
+        UI.p1Val.innerText = "0";
+        UI.p2Val.innerText = "0";
+      }
+    }
+
     if (data.phase === "DEFEND") {
       UI.title.innerText = `Round ${state.round}: DEFEND`;
       if (state.role === "DEFENDER") {
@@ -258,6 +276,13 @@ function connectSocket() {
     UI.title.innerText = `Round Over! +${myPoints} points`;
     setStatus(`Total score: ${myTotal}`);
     showAction(false);
+
+    // Update Live Scores
+    const totals = data?.totals || {};
+    if (state.players && state.players.length >= 2) {
+      UI.p1Val.innerText = totals[state.players[0].socketId] || 0;
+      UI.p2Val.innerText = totals[state.players[1].socketId] || 0;
+    }
 
     // Reveal the defended tiles (same for both players)
     state.board = data?.board || state.board;
@@ -290,11 +315,13 @@ function connectSocket() {
     `).join('');
 
     UI.resultOverlay.style.display = "flex";
+    UI.battleScoreboard.style.display = "none";
     showAction(false);
   });
 
   state.socket.on("opponentDisconnected", () => {
     UI.title.innerText = "TILE BATTLE";
+    UI.battleScoreboard.style.display = "none";
     setStatus("Opponent disconnected.");
     showAction(false);
   });
@@ -303,6 +330,7 @@ function connectSocket() {
 UI.btnReturnLobby.onclick = () => {
   UI.resultOverlay.style.display = "none";
   UI.grid.style.display = "none";
+  UI.battleScoreboard.style.display = "none";
   UI.lobby.style.display = "block";
   UI.title.innerText = "TILE BATTLE";
 };
