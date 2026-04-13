@@ -31,16 +31,17 @@ a, button, .tile, .feature-card {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 30px 0;
+  padding: 15px 0; /* Reduced from 30px */
   border-bottom: 1px solid #3a3a3c;
 }
+
 .lobby-nav {
     background: rgba(18, 18, 19, 0.8);
     backdrop-filter: blur(10px);
     position: sticky;
     top: 0;
     z-index: 100;
-    margin-bottom: 40px;
+    margin-bottom: 20px; /* Reduced from 40px */
 }
 .nav-content { display: flex; justify-content: space-between; align-items: center; width: 100%; }
 .logo { font-size: 24px; font-weight: 800; letter-spacing: 2px; }
@@ -201,11 +202,29 @@ a, button, .tile, .feature-card {
 .game-container { 
     width: 100%; 
     max-width: 650px; 
-    padding: 60px 20px; 
+    padding: 20px; /* Reduced from 60px 20px */
     text-align: center; 
-    margin: 0 auto; 
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
 }
-.header { padding-bottom: 12px; border-bottom: 1px solid #3a3a3c; margin-bottom: 14px; }
+.header { 
+    padding-bottom: 8px; /* Reduced from 12px */
+    border-bottom: 1px solid #3a3a3c; 
+    margin-bottom: 10px; /* Reduced from 14px */
+}
+
+#phase-title {
+    font-size: 24px; /* Slightly smaller to save space */
+    margin: 0;
+}
+
+#info { 
+    color: #818384; 
+    margin-top: 4px; /* Reduced from 8px */
+    font-size: 14px;
+}
+
 #info { color: #818384; margin-top: 8px; }
 
 /* Scoreboard Styling */
@@ -311,10 +330,12 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   display: grid;
   gap: 8px;
   width: 100% !important;
-  max-width: 450px;
-  margin: 30px auto;
+  /* Crucial fix: Restrict max width based on screen height to prevent scrolling */
+  max-width: min(450px, 55vh); 
+  margin: 15px auto; /* Reduced margin */
   justify-content: center;
 }
+
 .tile {
   aspect-ratio: 1 / 1;
   border: 2px solid #3a3a3c;
@@ -323,7 +344,8 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 28px;
+  /* Scale font size down slightly on smaller screens */
+  font-size: clamp(16px, 4vw, 28px);
   font-weight: 800;
   user-select: none;
 }
@@ -374,7 +396,7 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
 
 #action-btn { 
     display: none; 
-    margin: 20px auto; 
+    margin: 15px auto 0 auto; 
     width: 100%; 
     max-width: 450px; 
     padding: 16px; 
@@ -382,6 +404,13 @@ button:disabled { opacity: 0.5; cursor: not-allowed; }
     font-size: 16px; 
     letter-spacing: 1px; 
     text-transform: uppercase; 
+    
+    /* Sticky positioning keeps it on screen */
+    position: sticky;
+    bottom: 20px;
+    z-index: 50;
+    /* Add a subtle shadow so it pops if it overlaps the grid slightly */
+    box-shadow: 0 4px 20px rgba(18, 18, 19, 0.9);
 }
 
 .result-score-row {
