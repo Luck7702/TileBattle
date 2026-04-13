@@ -54,7 +54,6 @@ const PRESETS = {
 };
 
 function setStatus(text) {
-  console.log("Setting status:", text);
   UI.info.innerText = text;
 }
 
@@ -107,7 +106,6 @@ function showAction(show) {
 }
 
 function connectSocket() {
-  console.log("Attempting to connect Socket.IO...");
   if (!state.token || state.token === "null" || state.token === "undefined") {
     window.location.href = "/auth";
     return;
@@ -118,9 +116,7 @@ function connectSocket() {
   });
 
   state.socket.on("connect", () => {
-    console.log("Socket.IO connected successfully!");
     setStatus("Connected. Create or join a room.");
-    console.log("Client Connected to Server!");
   });
 
   state.socket.on("room:chat", ({ username, text }) => {
@@ -473,7 +469,18 @@ document.getElementById("btn-join-room").onclick = handleJoin;
 document.addEventListener('DOMContentLoaded', () => {
   initGrid();
   const hasValidToken = state.token && state.token !== "null" && state.token !== "undefined";
-  console.log("App.js loaded. Token Valid:", hasValidToken);
   if (hasValidToken) { connectSocket(); }
   else { window.location.href = "/auth"; }
 });
+
+const handleChatSend = () => {
+  if (!state.socket || !state.roomCode) return;
+  
+  const text = UI.chatInput.value.trim();
+  if (!text) return;
+  
+  // We send an object containing BOTH the message AND the code
+  state.socket.emit("room:chat", { roomCode: state.roomCode, message: text });
+  
+  UI.chatInput.value = ""; 
+};

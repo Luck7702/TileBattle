@@ -343,16 +343,32 @@ io.on("connection", (socket) => {
   }
   broadcastUserCount();
 
-  socket.on("room:chat", (message) => {
-    const code = socket.data.roomCode;
-    if (!code || !message || typeof message !== "string" || !socket.data.user) return;
-    const text = message.trim().substring(0, 140); // Standard tweet-like limit
-    if (!text) return;
+socket.on("room:chat", (payload) => {
+    // 1. Support both raw strings and the new object structure
+    let text = "";
+    let targetRoom = socket.data.roomCode; // Fallback to session data
 
-    roomEmit(code, "room:chat", {
+    if (typeof payload === "object" && payload !== null) {
+      text = payload.message;
+      if (payload.roomCode) targetRoom = payload.roomCode;
+    } else if (typeof payload === "string") {
+      text = payload;
+    }
+
+    // 2. Clear validation reporting so we know exactly why it fails
+    if (!targetRoom || !text || !socket.data.user) {
+      return;
+    }
+
+    const cleanText = text.trim().substring(0, 140);
+    
+    // 3. Native Socket.IO broadcast (bypassing custom roomEmit wrappers)
+    const response = {
       username: socket.data.user.username,
-      text: text
-    });
+      text: cleanText
+    };
+    
+    io.to(targetRoom).emit("room:chat", response);
   });
 
   socket.on("room:create", async () => {
